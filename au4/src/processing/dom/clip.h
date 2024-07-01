@@ -3,20 +3,17 @@
 
 #include <vector>
 
-#include "wave.h"
+#include "global/types/string.h"
+#include "draw/types/color.h"
+#include "../processingtypes.h"
 
 namespace au::processing {
-class Clip
-{
-public:
-    Clip() = default;
-
-    const Wave& wave() const;
-    void setWave(const Wave& w);
-
-private:
-
-    Wave m_wave;
+struct Clip {
+    ClipKey key;
+    muse::String title;
+    muse::draw::Color color;
+    double startTime = 0.0;
+    double endTime = 0.0;
 };
 
 using Clips = std::vector<Clip>;

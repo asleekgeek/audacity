@@ -1,31 +1,65 @@
-#ifndef AU_PROJECTSCENE_WAVEVIEW_H
-#define AU_PROJECTSCENE_WAVEVIEW_H
+/*
+* Audacity: A Digital Audio Editor
+*/
+#pragma once
 
-#include <QQuickItem>
+#include <QQuickPaintedItem>
 
-#include "wavesource.h"
+#include "modularity/ioc.h"
+#include "au3wrap/iau3wavepainter.h"
 
+#include "types/projectscenetypes.h"
+#include "../timeline/timelinecontext.h"
+
+class WaveClipItem;
 namespace au::projectscene {
-class WaveView : public QQuickItem
+class WaveView : public QQuickPaintedItem
 {
     Q_OBJECT
-    Q_PROPERTY(WaveSource source READ source WRITE setSource NOTIFY sourceChanged FINAL)
+    Q_PROPERTY(TimelineContext * context READ timelineContext WRITE setTimelineContext NOTIFY timelineContextChanged FINAL)
+    Q_PROPERTY(ClipKey clipKey READ clipKey WRITE setClipKey NOTIFY clipKeyChanged FINAL)
+    Q_PROPERTY(QColor clipColor READ clipColor WRITE setClipColor NOTIFY clipColorChanged FINAL)
+    Q_PROPERTY(bool clipSelected READ clipSelected WRITE setClipSelected NOTIFY clipSelectedChanged FINAL)
+
+    //! NOTE In a static position, the slip start time corresponds,
+    //! but it can change while dragging the clip, with the not changing start time
+    //! (until the end of dragging)
+    Q_PROPERTY(double clipLeft READ clipLeft WRITE setClipLeft NOTIFY clipLeftChanged FINAL)
+
+    muse::Inject<au3::IAu3WavePainter> wavePainter;
 
 public:
-    explicit WaveView(QQuickItem* parent = nullptr);
+    WaveView(QQuickItem* parent = nullptr);
+    ~WaveView() override;
 
-    WaveSource source() const;
-    void setSource(const WaveSource& newSource);
+    TimelineContext* timelineContext() const;
+    void setTimelineContext(TimelineContext* newContext);
+    ClipKey clipKey() const;
+    void setClipKey(const ClipKey& newClipKey);
+    QColor clipColor() const;
+    void setClipColor(const QColor& newClipColor);
+    bool clipSelected() const;
+    void setClipSelected(bool newClipSelected);
+    double clipLeft() const;
+    void setClipLeft(double newClipLeft);
+
+    void paint(QPainter* painter) override;
 
 signals:
-    void sourceChanged();
-
-protected:
-    QSGNode* updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData* updatePaintNodeData) override;
+    void timelineContextChanged();
+    void clipKeyChanged();
+    void clipColorChanged();
+    void clipLeftChanged();
+    void clipSelectedChanged();
 
 private:
-    WaveSource m_source;
+
+    void onFrameTimeChanged();
+
+    TimelineContext* m_context = nullptr;
+    ClipKey m_clipKey;
+    QColor m_clipColor;
+    double m_clipLeft = 0;
+    bool m_clipSelected = false;
 };
 }
-
-#endif // AU_PROJECTSCENE_WAVEVIEW_H

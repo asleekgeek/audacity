@@ -4,21 +4,24 @@
 #ifndef AU_PROСESSING_PROСESSINGMODULE_H
 #define AU_PROСESSING_PROСESSINGMODULE_H
 
-#include <memory>
-
 #include "modularity/imodulesetup.h"
 
 namespace au::processing {
+class ProcessingActionsController;
+class ProcessingUiActions;
 class ProcessingModule : public muse::modularity::IModuleSetup
 {
 public:
 
     std::string moduleName() const override;
     void registerExports() override;
+    void resolveImports() override;
     void onInit(const muse::IApplication::RunMode& mode) override;
     void onDeinit() override;
 
 private:
+    std::shared_ptr<ProcessingActionsController> m_processingController;
+    std::shared_ptr<ProcessingUiActions> m_processingUiActions;
 };
 }
 

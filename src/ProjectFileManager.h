@@ -95,9 +95,8 @@ public:
    static AudacityProject *OpenFile( const ProjectChooserFn &chooser,
       const FilePath &fileName, bool addtohistory = true);
 
-   bool
-   Import(const std::vector<FilePath>& fileNames, bool addToHistory = true);
    bool Import(const FilePath& fileName, bool addToHistory = true);
+   bool Import(wxArrayString fileNames, bool addToHistory = true);
 
    void Compact();
 
@@ -118,7 +117,10 @@ public:
                          const std::function<void(const TranslatableString&/*unlinkReason*/)>& onUnlink);
 
 private:
-   bool Import(
+   bool ImportAndRunTempoDetection(
+      const std::vector<FilePath>& fileNames, bool addToHistory);
+
+   bool DoImport(
       const FilePath& fileName, bool addToHistory,
       std::shared_ptr<ClipMirAudioReader>& resultingReader);
 

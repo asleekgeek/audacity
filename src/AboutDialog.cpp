@@ -137,7 +137,6 @@ void AboutDialog::CreateCreditsList()
    AddCredit(wxT("Dilson's Pickles"), designerFormat, roleTeamMember);
    AddCredit(wxT("Anita Sudan"), roleTeamMember);
    AddCredit(wxT("Vitaly Sverchinsky"), developerFormat, roleTeamMember);
-   AddCredit(wxT("Dmitry Vedenko"), developerFormat, roleTeamMember);
    AddCredit(wxT("Leo Wattenberg"), designerFormat, roleTeamMember);
    AddCredit(wxT("Jessica Williamson"), designerFormat, roleTeamMember);
    
@@ -171,6 +170,7 @@ void AboutDialog::CreateCreditsList()
    AddCredit(wxT("Alexandre Prokoudine"), documentationAndSupportFormat, roleEmeritusTeam);
    AddCredit(wxT("Peter Sampson"), qaDocumentationAndSupportFormat, roleEmeritusTeam);
    AddCredit(wxT("Martyn Shaw"), developerFormat, roleEmeritusTeam);
+   AddCredit(wxT("Dmitry Vedenko"), developerFormat, roleEmeritusTeam);
    AddCredit(wxT("Bill Wharrie"), documentationAndSupportFormat, roleEmeritusTeam);
 
    // Contributors
@@ -480,7 +480,7 @@ void AboutDialog::PopulateAudacityPage( ShuttleGui & S )
    HtmlWindow *html = safenew LinkingHtmlWindow(S.GetParent(), -1,
                                          wxDefaultPosition,
                                          wxSize(ABOUT_DIALOG_WIDTH, 359),
-                                         wxHW_SCROLLBAR_AUTO | wxSUNKEN_BORDER);
+                                         wxHW_SCROLLBAR_AUTO);
    html->SetPage( FormatHtmlText( o.GetString() ) );
 
    /* locate the html renderer where it fits in the dialogue */
@@ -505,7 +505,7 @@ void AboutDialog::PopulateInformationPage( ShuttleGui & S )
    S.StartVerticalLay(2);  // create the window
    HtmlWindow *html = safenew LinkingHtmlWindow(S.GetParent(), -1, wxDefaultPosition,
                            wxSize(ABOUT_DIALOG_WIDTH, 264),
-                           wxHW_SCROLLBAR_AUTO | wxSUNKEN_BORDER);
+                           wxHW_SCROLLBAR_AUTO );
    // create a html pane in it to put the content in.
    auto enabled = XO("Enabled");
    auto disabled = XO("Disabled");
@@ -814,7 +814,7 @@ void AboutDialog::PopulateLicensePage( ShuttleGui & S )
    {
       HtmlWindow* html = safenew LinkingHtmlWindow(
          S.GetParent(), -1, wxDefaultPosition, wxSize(ABOUT_DIALOG_WIDTH, 264),
-         wxHW_SCROLLBAR_AUTO | wxSUNKEN_BORDER);
+         wxHW_SCROLLBAR_AUTO );
 
       html->SetPage(FormatHtmlText(GPL_TEXT()));
 

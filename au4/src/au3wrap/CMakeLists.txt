@@ -24,18 +24,45 @@ declare_module(au3wrap)
 set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/au3wrapmodule.cpp
     ${CMAKE_CURRENT_LIST_DIR}/au3wrapmodule.h
-
-    ${CMAKE_CURRENT_LIST_DIR}/wxtypes_convert.h
-    ${CMAKE_CURRENT_LIST_DIR}/audacity3project.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/audacity3project.h
-    ${CMAKE_CURRENT_LIST_DIR}/audacity3playback.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/audacity3playback.h
+    ${CMAKE_CURRENT_LIST_DIR}/iau3project.h
+    ${CMAKE_CURRENT_LIST_DIR}/iau3wavepainter.h
+    ${CMAKE_CURRENT_LIST_DIR}/iau3record.h
+    ${CMAKE_CURRENT_LIST_DIR}/iau3audioinput.h
 
     ${CMAKE_CURRENT_LIST_DIR}/mocks/au3settingsmock.cpp
     ${CMAKE_CURRENT_LIST_DIR}/mocks/au3settingsmock.h
 
+    ${CMAKE_CURRENT_LIST_DIR}/internal/wxtypes_convert.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/wxlogwrap.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/wxlogwrap.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/domconverter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/domconverter.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/domaccessor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/domaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3project.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3project.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/processinginteraction.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/processinginteraction.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3wavepainter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3wavepainter.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/WaveformScale.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/WaveformScale.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3playback.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3playback.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3player.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3player.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audiooutput.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audiooutput.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3record.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3record.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audioinput.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audioinput.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audioinoutmeter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audioinoutmeter.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audiodevicesprovider.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3audiodevicesprovider.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3selectioncontroller.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/au3selectioncontroller.h
     )
 
 # ==================================
@@ -86,10 +113,16 @@ set(AU3_DEF
     -DREALTIME_EFFECTS_API=
     -DMODULE_MANAGER_API=
     -DWX_INIT_API=
+    -DVIEWPORT_API=
+    -DSNAPPING_API=
+    -DNUMERIC_FORMATS_API=
 
     -DTIME_FREQUENCY_SELECTION_API=
     -DSCREEN_GEOMETRY_API=
     -DSQLITE_HELPERS_API=
+
+    -DGRAPHICS_API=
+    -DWAVE_TRACK_PAINT_API=
 
     -DEXPERIMENTAL_SPECTRAL_EDITING
 )
@@ -135,6 +168,9 @@ set(AU3_INCLUDE
     ${AU3_LIBRARIES}/lib-project-rate
     ${AU3_LIBRARIES}/lib-track-selection
     ${AU3_LIBRARIES}/lib-audio-devices
+    ${AU3_LIBRARIES}/lib-viewport
+    ${AU3_LIBRARIES}/lib-snapping
+    ${AU3_LIBRARIES}/lib-numeric-formats
 
     # compile lib-audio-io
     ${AU3_LIBRARIES}/lib-audio-io
@@ -145,6 +181,11 @@ set(AU3_INCLUDE
 
     # compile after update 04.26
     ${AU3_LIBRARIES}/lib-sqlite-helpers
+
+    # track paint
+    ${AU3_LIBRARIES}/lib-time-frequency-selection
+    ${AU3_LIBRARIES}/lib-graphics
+    ${AU3_LIBRARIES}/lib-wave-track-paint
 )
 
 set(AU3_ADD_AS_SRC ON)
@@ -310,6 +351,8 @@ if (AU3_ADD_AS_SRC)
 
     ${AU3_LIBRARIES}/lib-track-selection/SyncLock.cpp
     ${AU3_LIBRARIES}/lib-track-selection/SyncLock.h
+    ${AU3_LIBRARIES}/lib-track-selection/TrackFocus.cpp
+    ${AU3_LIBRARIES}/lib-track-selection/TrackFocus.h
 
     ${AU3_LIBRARIES}/lib-project-rate/Decibels.cpp
     ${AU3_LIBRARIES}/lib-project-rate/Decibels.h
@@ -344,6 +387,8 @@ if (AU3_ADD_AS_SRC)
     ${AU3_LIBRARIES}/lib-audio-devices/AudioIOBase.h
     ${AU3_LIBRARIES}/lib-audio-devices/DeviceManager.cpp
     ${AU3_LIBRARIES}/lib-audio-devices/DeviceManager.h
+    ${AU3_LIBRARIES}/lib-audio-devices/Meter.cpp
+    ${AU3_LIBRARIES}/lib-audio-devices/Meter.h
 
     ${AU3_LIBRARIES}/lib-audio-graph/AudioGraphChannel.cpp
     ${AU3_LIBRARIES}/lib-audio-graph/AudioGraphChannel.h
@@ -444,6 +489,36 @@ if (AU3_ADD_AS_SRC)
 
     # end dependencies of lib-audio-io
 
+    # track paint
+    ${AU3_LIBRARIES}/lib-wave-track-paint/GraphicsDataCache.cpp
+    ${AU3_LIBRARIES}/lib-wave-track-paint/GraphicsDataCache.h
+    ${AU3_LIBRARIES}/lib-wave-track-paint/PixelSampleMapper.cpp
+    ${AU3_LIBRARIES}/lib-wave-track-paint/PixelSampleMapper.h
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WaveBitmapCache.cpp
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WaveBitmapCache.h
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WaveDataCache.cpp
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WaveDataCache.h
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WaveData.cpp
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WaveData.h
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WavePaintParameters.cpp
+    ${AU3_LIBRARIES}/lib-wave-track-paint/waveform/WavePaintParameters.h
+
+    ${AU3_LIBRARIES}/lib-graphics/FrameStatistics.cpp
+    ${AU3_LIBRARIES}/lib-graphics/FrameStatistics.h
+
+    ${AU3_LIBRARIES}/lib-viewport/Viewport.cpp
+    ${AU3_LIBRARIES}/lib-viewport/Viewport.h
+
+    ${AU3_LIBRARIES}/lib-snapping/ProjectSnap.cpp
+    ${AU3_LIBRARIES}/lib-snapping/ProjectSnap.h
+    ${AU3_LIBRARIES}/lib-snapping/SnapUtils.cpp
+    ${AU3_LIBRARIES}/lib-snapping/SnapUtils.h
+
+    ${AU3_LIBRARIES}/lib-numeric-formats/ProjectTimeSignature.cpp
+    ${AU3_LIBRARIES}/lib-numeric-formats/ProjectTimeSignature.h
+    ${AU3_LIBRARIES}/lib-numeric-formats/Beats.cpp
+    ${AU3_LIBRARIES}/lib-numeric-formats/Beats.h
+
     # Requires wxApp, so we won't use it
     # ${AU3_LIBRARIES}/lib-wx-init/SettingsWX.cpp
     # ${AU3_LIBRARIES}/lib-wx-init/SettingsWX.h
@@ -514,4 +589,5 @@ set(MODULE_SRC ${MODULE_SRC} ${AU3_SRC})
 
 set(MODULE_USE_PCH_NONE ON)
 set(MODULE_USE_UNITY_NONE ON)
+
 setup_module()

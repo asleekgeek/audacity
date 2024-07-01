@@ -53,7 +53,7 @@ elseif(OS_IS_MAC)
     set(MACOSX_BUNDLE_BUNDLE_VERSION ${CMAKE_BUILD_NUMBER})
     set(MACOSX_BUNDLE_COPYRIGHT "Copyright © 1999-2024. Published under the GNU General Public License version 3.")
 
-    set(CMAKE_INSTALL_RPATH ${QT_INSTALL_LIBS})
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${QT_INSTALL_LIBS};@loader_path/../Frameworks")
 
     message("MACOSX_BUNDLE_VERSION: ${MACOSX_BUNDLE_LONG_VERSION_STRING}.${MACOSX_BUNDLE_BUNDLE_VERSION}")
 endif()
@@ -67,6 +67,7 @@ set(LINK_LIB
     muse::global
     wxwidgets::wxwidgets
 
+    muse::draw
     muse::actions
     muse::ui
     muse::uicomponents
@@ -86,6 +87,7 @@ set(LINK_LIB
     project
     projectscene
     playback
+    record
 )
 
 ###########################################
@@ -272,12 +274,6 @@ elseif(OS_IS_LIN)
 
     install(TARGETS ${EXECUTABLE_NAME} RUNTIME DESTINATION bin)
 
-    # message("~~~~~~~ install DIRECTORY: ${_LIB_OUTPUT} DESTINATION ${_LIB_INSTALL}")
-    # install( DIRECTORY "${_LIB_OUTPUT}"
-    #          DESTINATION "${_LIB_INSTALL}"
-    #          USE_SOURCE_PERMISSIONS
-    #          FILES_MATCHING PATTERN "*.so*" )
-
 elseif(OS_IS_FBSD)
 ###########################################
 # FreeBSD
@@ -289,7 +285,6 @@ elseif(OS_IS_FBSD)
 ###########################################
 elseif(OS_IS_MAC)
 
-    message("~~~~~~CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
     install(TARGETS audacity BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX})
 
     if(MU_COMPILE_INSTALL_QTQML_FILES)

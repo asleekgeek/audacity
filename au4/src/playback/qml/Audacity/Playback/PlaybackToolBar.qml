@@ -7,192 +7,192 @@ import Muse.Ui 1.0
 import Muse.UiComponents 1.0
 
 import Audacity.Playback 1.0
+import Audacity.Record 1.0
 
 import "internal"
+import "components"
 
 Item {
     id: root
-
-    property alias orientation: gridView.orientation
 
     property bool floating: false
 
     property int maximumWidth: 0
     property int maximumHeight: 0
 
-    width: gridView.isHorizontal ? childrenRect.width : 76
-    height: !gridView.isHorizontal ? childrenRect.height : 40
+    property alias navigationPanel: view.navigationPanel
 
-    property NavigationPanel navigationPanel: NavigationPanel {
-        name: "PlaybackToolBar"
-        enabled: root.enabled && root.visible
-        accessible.name: qsTrc("playback", "Playback toolbar")
-    }
+    width: view.width + /*spacing*/ 4 + customizeButton.width
+    height: 48 // todo
 
-    PlaybackToolBarModel {
-        id: toolbarModel
-    }
+    StyledToolBarView {
+        id: view
 
-    QtObject {
-        id: prv
+        anchors.verticalCenter: parent.verticalCenter
 
-        function resolveHorizontalGridViewWidth() {
-            if (root.floating) {
-                return gridView.contentWidth
+        rowHeight: 48
+
+        model: PlaybackToolBarModel {}
+
+        sourceComponentCallback: function(type) {
+            switch(type) {
+            case PlaybackToolBarModel.PLAYBACK_CONTROL: return controlComp
+            case PlaybackToolBarModel.PLAYBACK_LEVEL: return playbackLevelComp
+            case PlaybackToolBarModel.PLAYBACK_TIME: return playbackTimeComp
+            case PlaybackToolBarModel.PLAYBACK_BPM: return playbackBPMComp
+            case PlaybackToolBarModel.PLAYBACK_TIME_SIGNATURE: return playbackTimeSignatureComp
+            case PlaybackToolBarModel.RECORD_LEVEL: return recordLevelComp
+            case PlaybackToolBarModel.PROJECT_CONTROL: return projectControlComp
             }
 
-            var requiredFreeSpace = gridView.cellWidth * 3 + gridView.rowSpacing * 4
-
-            if (root.maximumWidth - gridView.contentWidth < requiredFreeSpace) {
-                return gridView.contentWidth - requiredFreeSpace
-            }
-
-            return gridView.contentWidth
+            return null
         }
 
-        function resolveVerticalGridViewHeight() {
-            if (root.floating) {
-                return gridView.contentHeight
+        Component {
+            id: controlComp
+
+            StyledToolBarItem {
+                width: 32
+                height: width
+
+                iconColor: Boolean(itemData) ? itemData.iconColor : ui.theme.fontPrimaryColor
+                accentColor: Boolean(itemData) ? itemData.backgroundColor : ui.theme.buttonColor
+                accentButton: Boolean(itemData) ? itemData.selected : false
             }
-
-            var requiredFreeSpace = gridView.cellHeight * 3 + gridView.rowSpacing * 4
-
-            if (root.maximumHeight - gridView.contentHeight < requiredFreeSpace) {
-                return gridView.contentHeight - requiredFreeSpace
-            }
-
-            return gridView.contentHeight
-        }
-    }
-
-    Component.onCompleted: {
-        toolbarModel.load()
-    }
-
-    GridViewSectional {
-        id: gridView
-
-        sectionRole: "section"
-
-        rowSpacing: 4
-        columnSpacing: 4
-
-        cellWidth: 32
-        cellHeight: cellWidth
-
-        clip: true
-
-        model: toolbarModel
-
-        sectionDelegate: SeparatorLine {
-            orientation: gridView.orientation
-            visible: itemIndex !== 0
         }
 
-        itemDelegate: FlatButton {
-            id: btn
+        Component {
+            id: projectControlComp
 
-            property var item: Boolean(itemModel) ? itemModel.itemRole : null
-            property var hasMenu: Boolean(item) && item.subitems.length !== 0
+            StyledToolBarItem {
+                width: 28
+                height: width
+            }
+        }
 
-            width: gridView.cellWidth
-            height: gridView.cellWidth
+        Component {
+            id: playbackLevelComp
 
-            accentButton: (Boolean(item) && item.checked) || menuLoader.isMenuOpened
-            transparent: !accentButton
+            PlaybackLevel {
+                property var itemData: null
 
-            icon: Boolean(item) ? item.icon : IconCode.NONE
-            iconFont: ui.theme.toolbarIconsFont
+                width: 240
+                height: 28
 
-            toolTipTitle: Boolean(item) ? item.title : ""
-            toolTipDescription: Boolean(item) ? item.description : ""
-            toolTipShortcut: Boolean(item) ? item.shortcuts : ""
+                volumeLevel: Boolean(itemData) ? itemData.level : 0
+                leftCurrentVolumePressure: Boolean(itemData) ? itemData.leftChannelPressure : 0
+                rightCurrentVolumePressure: Boolean(itemData) ? itemData.rightChannelPressure : 0
 
-            navigation.panel: root.navigationPanel
-            navigation.name: Boolean(item) ? item.id : ""
-            navigation.order: Boolean(itemModel) ? itemModel.order : 0
-            isClickOnKeyNavTriggered: false
-            navigation.onTriggered: {
-                if (menuLoader.isMenuOpened || hasMenu) {
-                    toggleMenuOpened()
-                } else {
-                    handleMenuItem()
+                navigationPanel: root.navigationPanel
+                navigationOrder: 2
+
+                onVolumeLevelChangeRequested: function(level) {
+                    itemData.level = level
                 }
             }
+        }
 
-            mouseArea.acceptedButtons: hasMenu && itemModel.isMenuSecondary
-                                       ? Qt.LeftButton | Qt.RightButton
-                                       : Qt.LeftButton
+        Component {
+            id: playbackTimeComp
 
-            function toggleMenuOpened() {
-                menuLoader.toggleOpened(item.subitems)
-            }
+            Timecode {
+                property var itemData: null
 
-            function handleMenuItem() {
-                Qt.callLater(toolbarModel.handleMenuItem, item.id)
-            }
+                value: Boolean(itemData) ? itemData.currentValue : 0
 
-            onClicked: function(mouse) {
-                if (menuLoader.isMenuOpened // If already menu open, close it
-                        || (hasMenu // Or if can open menu
-                            && (!itemModel.isMenuSecondary // And _should_ open menu
-                                || mouse.button === Qt.RightButton))) {
-                    toggleMenuOpened()
-                    return
-                }
+                sampleRate: Boolean(itemData) ? itemData.sampleRate : 0
+                tempo: Boolean(itemData) ? itemData.tempo : 0
+                upperTimeSignature: Boolean(itemData) ? itemData.upperTimeSignature : 0
+                lowerTimeSignature: Boolean(itemData) ? itemData.lowerTimeSignature : 0
 
-                if (mouse.button === Qt.LeftButton) {
-                    handleMenuItem()
-                }
-            }
+                currentFormat: Boolean(itemData) ? itemData.currentFormat : 0
 
-            Connections {
-                target: btn.mouseArea
-
-                // Make sure we only connect to `pressAndHold` if necessary
-                // See https://github.com/musescore/MuseScore/issues/16012
-                enabled: btn.hasMenu && !menuLoader.isMenuOpened
-
-                function onPressAndHold() {
-                    if (menuLoader.isMenuOpened || !btn.hasMenu) {
+                onValueChangeRequested: function(newValue) {
+                    if (!Boolean(itemData)) {
                         return
                     }
 
-                    btn.toggleMenuOpened()
+                    itemData.currentValue = newValue
+                }
+
+                onCurrentFormatChanged: {
+                    if (!Boolean(itemData)) {
+                        return
+                    }
+
+                    itemData.currentFormat = currentFormat
                 }
             }
+        }
 
-            Canvas {
-                visible: Boolean(itemModel) && itemModel.isMenuSecondary
+        Component {
+            id: playbackBPMComp
 
-                property color fillColor: ui.theme.fontPrimaryColor
-                onFillColorChanged: {
-                    requestPaint()
-                }
+            BPM {
+                property var itemData: null
 
-                width: 4
-                height: 4
+                value: Boolean(itemData) ? itemData.currentValue : 0
 
-                anchors.margins: 2
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
+                onValueChangeRequested: function(newValue) {
+                    if (!Boolean(itemData)) {
+                        return
+                    }
 
-                onPaint: {
-                    const ctx = getContext("2d");
-                    ctx.fillStyle = fillColor;
-                    ctx.moveTo(width, 0);
-                    ctx.lineTo(width, height);
-                    ctx.lineTo(0, height);
-                    ctx.closePath();
-                    ctx.fill();
+                    itemData.currentValue = newValue
                 }
             }
+        }
 
-            StyledMenuLoader {
-                id: menuLoader
+        Component {
+            id: playbackTimeSignatureComp
 
-                onHandleMenuItem: function(itemId) {
-                    toolbarModel.handleMenuItem(itemId)
+            TimeSignature {
+                property var itemData: null
+
+                upper: Boolean(itemData) ? itemData.upper : 0
+                lower: Boolean(itemData) ? itemData.lower : 0
+
+                onUpperChangeRequested: function(newValue) {
+                    if (!Boolean(itemData)) {
+                        return
+                    }
+
+                    itemData.upper = newValue
+                }
+
+                onLowerChangeRequested: function(newValue) {
+                    if (!Boolean(itemData)) {
+                        return
+                    }
+
+                    itemData.lower = newValue
+                }
+            }
+        }
+
+        Component {
+            id: recordLevelComp
+
+            RecordLevel {
+                property var itemData: null
+
+                width: 28
+                height: width
+
+                icon: Boolean(itemData) ? itemData.icon : IconCode.NONE
+
+                toolTipTitle: Boolean(itemData) ? itemData.title : ""
+                toolTipDescription: Boolean(itemData) ? itemData.description : ""
+
+                volumeLevel: Boolean(itemData) ? itemData.level : 0
+                leftCurrentVolumePressure: Boolean(itemData) ? itemData.leftChannelPressure : 0
+                rightCurrentVolumePressure: Boolean(itemData) ? itemData.rightChannelPressure : 0
+
+                navigationPanel: root.navigationPanel
+                navigationOrder: 1
+
+                onVolumeLevelChangeRequested: function(level) {
+                    itemData.level = level
                 }
             }
         }
@@ -202,15 +202,16 @@ Item {
         id: customizeButton
 
         anchors.margins: 4
+        anchors.left: view.right
+        anchors.verticalCenter: root.verticalCenter
 
-        width: gridView.cellWidth
-        height: gridView.cellHeight
+        width: 28
+        height: width
 
         icon: IconCode.SETTINGS_COG
         iconFont: ui.theme.toolbarIconsFont
         toolTipTitle: qsTrc("playback", "Customize toolbar")
         toolTipDescription: qsTrc("playback", "Show/hide toolbar buttons")
-        transparent: true
 
         navigation.panel: root.navigationPanel
         navigation.order: 100
@@ -226,45 +227,4 @@ Item {
             anchorItem: !root.floating ? ui.rootItem : null
         }
     }
-
-    states: [
-        State {
-            when: gridView.isHorizontal
-
-            PropertyChanges {
-                target: gridView
-                width: prv.resolveHorizontalGridViewWidth()
-                height: root.height
-                sectionWidth: 1
-                sectionHeight: root.height
-                rows: 1
-                columns: gridView.noLimit
-            }
-
-            AnchorChanges {
-                target: customizeButton
-                anchors.left: gridView.right
-                anchors.verticalCenter: root.verticalCenter
-            }
-        },
-        State {
-            when: !gridView.isHorizontal
-
-            PropertyChanges {
-                target: gridView
-                width: root.width
-                height: prv.resolveVerticalGridViewHeight()
-                sectionWidth: root.width
-                sectionHeight: 1
-                rows: gridView.noLimit
-                columns: 2
-            }
-
-            AnchorChanges {
-                target: customizeButton
-                anchors.top: gridView.bottom
-                anchors.right: parent.right
-            }
-        }
-    ]
 }

@@ -49,6 +49,8 @@ Paul Licameli split from WaveChannelView.cpp
 #include "waveform/WaveDataCache.h"
 #include "waveform/WavePaintParameters.h"
 
+#include <atomic>
+
 
 static WaveChannelSubView::Type sType{
    WaveChannelViewConstants::Waveform,
@@ -216,7 +218,8 @@ public:
 
    WaveformPainter& EnsureClip (const WaveClip& clip)
    {
-      if (&clip != mWaveClip)
+      const auto changed = mChanged.exchange(false);
+      if (&clip != mWaveClip || changed)
          mChannelCaches.clear();
 
       const auto nChannels = clip.NChannels();
@@ -284,7 +287,19 @@ public:
       }
    }
 
-   void MarkChanged() noexcept override { }
+   void SwapChannels() override
+   {
+      //Wave data cache captures channel index which becomes
+      //part of it's state, request cache rebuild...
+      mChanged.store(true);
+   }
+
+   void MarkChanged() noexcept override
+   {
+      //Triggered when any part of the waveform has changed
+      //TODO: invalidate parts of the cache that intersect changes
+      mChanged.store(true);
+   }
 
    void Invalidate() override
    {
@@ -310,6 +325,7 @@ private:
    };
 
    std::vector<ChannelCaches> mChannelCaches;
+   std::atomic<bool> mChanged = false;
 };
 
 void DrawWaveform(
@@ -338,7 +354,7 @@ void DrawWaveform(
       .SetBlankColor(ColorFromWXBrush(artist->blankBrush))
       .SetSampleColors(
          ColorFromWXPen(muted ? artist->muteSamplePen : artist->samplePen),
-         ColorFromWXPen(muted ? artist->muteSamplePen : artist->selsamplePen))
+         ColorFromWXPen(muted ? artist->muteSamplePen : artist->samplePen))
       .SetRMSColors(
          ColorFromWXPen(muted ? artist->muteRmsPen : artist->rmsPen),
          ColorFromWXPen(muted ? artist->muteRmsPen : artist->rmsPen))
@@ -398,9 +414,10 @@ void DrawWaveformBackground(TrackPanelDrawingContext &context,
    const auto &blankBrush = artist->blankBrush;
    const auto &selectedBrush = artist->selectedBrush;
    const auto &unselectedBrush = artist->unselectedBrush;
+   const auto &envelopeBackgroundBrush = artist->envelopeBackgroundBrush;
 
    dc.SetPen(*wxTRANSPARENT_PEN);
-   dc.SetBrush(blankBrush);
+   dc.SetBrush(envelopeBackgroundBrush);
    dc.DrawRectangle(rect);
 
    // Bug 2389 - always draw at least one pixel of selection.
@@ -850,9 +867,23 @@ void DrawClipWaveform(TrackPanelDrawingContext &context,
    }
    else
    {
-      DrawIndividualSamples(
-         context, leftOffset, rect, zoomMin, zoomMax, dB, dBRange, clip,
-         showPoints, muted, highlight);
+      std::vector<WavePortion> portions;
+      FindWavePortions(portions, rect, zoomInfo, params);
+      auto offset = leftOffset;
+      for(const auto& portion : portions)
+      {
+         assert(!portion.inFisheye && portion.averageZoom > threshold1);
+         if(portion.inFisheye || portion.averageZoom <= threshold1)
+            continue;
+
+         wxRect rectPortion = portion.rect;
+         rectPortion.Intersect(mid);
+         DrawIndividualSamples(
+            context, offset, rectPortion, zoomMin, zoomMax, dB, dBRange, clip,
+            showPoints, muted, highlight);
+         offset += rectPortion.width;
+      }
+      
    }
 
    const auto drawEnvelope = artist->drawEnvelope;

@@ -19,16 +19,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
-import Muse.Ui 1.0
-import Muse.UiComponents 1.0
+import Muse.Ui
+import Muse.UiComponents
+import Muse.Dock
 
-import Muse.Dock 1.0
-import Audacity.AppShell 1.0
-import Audacity.ProjectScene 1.0
-import Audacity.Playback 1.0
+import Audacity.AppShell
+import Audacity.ProjectScene
+import Audacity.Playback
 
 import "../dockwindow"
 
@@ -123,12 +123,6 @@ DockPage {
             ProjectToolBar {
                 navigationPanel.section: root.topToolKeyNavSec
                 navigationPanel.order: 2
-
-                onActiveFocusRequested: {
-                    if (navigationPanel.active) {
-                        projectToolBar.forceActiveFocus()
-                    }
-                }
             }
         }
     ]
@@ -140,15 +134,14 @@ DockPage {
             objectName: pageModel.playbackToolBarName()
             title: qsTrc("appshell", "Play Tool Bar")
 
+            thickness: 48 // todo
+
             dropDestinations: [
                 root.toolBarTopDropDestination,
-                root.toolBarBottomDropDestination,
-                root.toolBarLeftDropDestination,
-                root.toolBarRightDropDestination
+                root.toolBarBottomDropDestination
             ]
 
             PlaybackToolBar {
-                orientation: playbackToolBar.orientation
                 floating: playbackToolBar.floating
 
                 maximumWidth: playbackToolBar.width
@@ -187,7 +180,17 @@ DockPage {
         }
     ]
 
-    central: ClipsView {
+    central: TracksClipsView {
         id: clipsView
+    }
+
+    statusBar: DockStatusBar {
+        objectName: pageModel.statusBarName()
+
+        height: 40
+        minimumHeight: height
+        maximumHeight: height
+
+        ProjectStatusBar {}
     }
 }
